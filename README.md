@@ -39,7 +39,7 @@
 
 ## 图形界面版本操作说明
 
-![image](https://raw.githubusercontent.com/Ai-Thinker-Open/TBXX_Flash_Tool/master/mian.png)
+![image](https://shyboy.oss-cn-shenzhen.aliyuncs.com/readonly/main.png)
 
 图形界面如上图所示，提供烧录固件，烧录三元组，擦除固件等功能。
 
