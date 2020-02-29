@@ -57,7 +57,7 @@ RES_CHANGE_BAUD = 'OK_05'
 
 
 def tl_open_port(port_name):
-    _port = serial.serial_for_url(args.port)
+    _port = serial.serial_for_url(port_name)
 
     _port.baudrate = 115200
 
