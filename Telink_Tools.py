@@ -38,7 +38,7 @@ except ImportError:
           "Check the README for installation instructions." % (sys.VERSION, sys.executable))
     raise
 
-__version__ = "0.2 dev"
+__version__ = "0.3 dev"
 
 PYTHON2 = sys.version_info[0] < 3  # True if on pre-Python 3
 
@@ -46,17 +46,20 @@ CMD_GET_VERSION = 0x00
 CMD_WRITE_FLASH = 0x01
 CMD_READ_FLASH  = 0x02
 CMD_ERASE_FLASH = 0x03
+CMD_READ_MUID   = 0x04
+CMD_CHANGE_BAUD = 0x05
 
 RES_WRITE_FLASH = 'OK_01'
 RES_READ_FLASH  = 'OK_02'
 RES_ERASE_FLASH = 'OK_03'
+RES_READ_MUID   = 'OK_04'
+RES_CHANGE_BAUD = 'OK_05'
 
 
 def tl_open_port(port_name):
-    _port = serial.Serial(port_name, 921600, timeout=0.5)
+    _port = serial.serial_for_url(args.port)
 
-    if not _port.isOpen():
-        _port.open()
+    _port.baudrate = 115200
 
     return _port
 
@@ -66,7 +69,10 @@ def get_port_list():
 def uart_read(_port):
     data = ''
     while _port.inWaiting() > 0:
-        data += _port.read_all().decode(encoding='utf-8')
+        try:
+            data += _port.read_all().decode(encoding='utf-8')
+        except Exception as e:
+            break
     return str(data)
 
 def uart_write(_port, data):
@@ -75,16 +81,16 @@ def uart_write(_port, data):
 
     _port.write(data)
 
-def wait_result(_port, res):
+def wait_result(_port, res, time_out = 200):
     wait_c = 0
     result = ''
     while True:
         result += uart_read(_port)
         if(len(result) > 5): 
             break
-        time.sleep(0.005)
+        time.sleep(0.01)
         wait_c += 1
-        if(wait_c > 400): break
+        if(wait_c > time_out): break
 
     if result.find(res) == -1:
         return False
@@ -175,6 +181,21 @@ def read_flash(_port, args):
 
 def burn(_port, args):
 
+    print("Try to change Baud to 921600 ... ... ", end="")
+    sys.stdout.flush()
+
+    uart_write(_port, struct.pack('>BH', CMD_CHANGE_BAUD, 0))
+
+    _port.baudrate = 921600
+    if wait_result(_port, RES_CHANGE_BAUD, 20):
+        uart_write(_port, struct.pack('>BH', CMD_CHANGE_BAUD, 0))
+        print("\033[3;32mOK!\033[0m")
+        time.sleep(0.2)
+    else :
+        _port.baudrate = 115200
+        print("\033[3;33mFail!\033[0m Use default baud 115200")
+        time.sleep(0.5)
+
     print("Erase Flash at 0x4000 len 176 KB ... ... ", end="")
     sys.stdout.flush()
 
@@ -191,7 +212,6 @@ def burn(_port, args):
     if firmware_size > 0x2c000:
         print("\033[3;31mFirmware Too BIG!\033[0m")
         fo.close()
-        _port.close()
 
     bar_len = 50
 
@@ -303,6 +323,8 @@ def main(custom_commandline=None):
         operation_func(_port,args)
     else:
         print("\033[3;31mFail!\033[0m")
+
+    _port.close()
 
 def _main():
     #try:
