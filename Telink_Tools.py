@@ -121,7 +121,7 @@ def telink_flash_erase(_port, addr, len_t):
     if (addr + (len_t * 0x1000) ) > 0x80000: return False
 
     uart_write(_port, struct.pack('>BHIB', CMD_ERASE_FLASH, 5, addr, len_t))
-    time.sleep(len_t * 0.01) #wait erase complect
+    time.sleep(len_t * 0.03) #wait erase complect
     return wait_result(_port, RES_ERASE_FLASH)
 
 def connect_chip(_port):
@@ -140,6 +140,19 @@ def connect_chip(_port):
     if wait_result(_port, "V"):
         return True
     return False
+
+def change_baud(_port):
+
+    uart_write(_port, struct.pack('>BH', CMD_CHANGE_BAUD, 0))
+
+    _port.baudrate = 921600
+    time.sleep(0.01)
+    if wait_result(_port, RES_CHANGE_BAUD, 50):
+        return True
+    else:
+        _port.baudrate = 115200
+        connect_chip(_port)
+        return False
 
 def erase_flash(_port, args):
 
@@ -184,17 +197,10 @@ def burn(_port, args):
     print("Try to change Baud to 921600 ... ... ", end="")
     sys.stdout.flush()
 
-    uart_write(_port, struct.pack('>BH', CMD_CHANGE_BAUD, 0))
-
-    _port.baudrate = 921600
-    if wait_result(_port, RES_CHANGE_BAUD, 20):
-        uart_write(_port, struct.pack('>BH', CMD_CHANGE_BAUD, 0))
+    if change_baud(_port):
         print("\033[3;32mOK!\033[0m")
-        time.sleep(0.2)
     else :
-        _port.baudrate = 115200
-        print("\033[3;33mFail!\033[0m Use default baud 115200")
-        time.sleep(0.5)
+        print("\033[3;33mFail!\033[0m")
 
     print("Erase Flash at 0x4000 len 176 KB ... ... ", end="")
     sys.stdout.flush()

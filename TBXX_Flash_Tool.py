@@ -10,7 +10,7 @@ import time
 from PyQt5.QtWidgets import QPushButton,QApplication,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QComboBox,QFileDialog,QProgressBar
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
 from PyQt5.QtGui import QIcon
-from Telink_Tools import get_port_list,tl_open_port,connect_chip,telink_flash_write,telink_flash_erase
+from Telink_Tools import get_port_list,tl_open_port,connect_chip,change_baud,telink_flash_write,telink_flash_erase
 
 __version__ = "V1.0"
 
@@ -58,6 +58,11 @@ class TelinkThread(QThread):
         
 
         if self.action == "burn": #烧录固件
+
+            self.textSignal.emit("尝试提高波特率...")
+
+            if change_baud(_port):
+                self.textSignal.emit("提高波特率成功！！！")
 
             self.textSignal.emit("擦除固件 ... ... ")
 
