@@ -317,7 +317,8 @@ def main(custom_commandline=None):
     print("Open " + args.port + " ... ... ", end="")
     
     try:
-        _port = tl_open_port(args.port)
+        _port = serial.serial_for_url(args.port)
+        _port.baudrate = 115200
     except Exception:
         print("\033[3;31mFail!\033[0m")
         return

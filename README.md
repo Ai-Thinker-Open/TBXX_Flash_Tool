@@ -65,7 +65,7 @@
 如果提示 ```连接芯片失败```,可能是接线错误请检查接线，如果确认接线无误仍然连接失败可能是bootloader损坏。如果bootloader损坏只能采用官方专用烧录器重新烧录botloader。
 
 ### 打包可执行文件
-    pyinstaller -F -w  TBXX_Flash_Tool.py
+    pyinstaller -F -w  -i aithinker.ico TBXX_Flash_Tool.py
 
 ## 命令行版本操作说明
 命令行版本的指令格式为：

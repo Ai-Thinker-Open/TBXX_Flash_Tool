@@ -7,12 +7,16 @@ import io
 import os
 import struct
 import time
+import base64
 from PyQt5.QtWidgets import QPushButton,QApplication,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QComboBox,QFileDialog,QProgressBar
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
 from PyQt5.QtGui import QIcon
 from Telink_Tools import get_port_list,tl_open_port,connect_chip,change_baud,telink_flash_write,telink_flash_erase
 
-__version__ = "V1.0"
+
+from aithinker_png import aithinker_png as logo
+
+__version__ = "V1.2"
 
 class TelinkThread(QThread):
     pressbarSignal = pyqtSignal(int)
@@ -135,6 +139,12 @@ class TB_Tools(QWidget):
         super().__init__(parent)
 
         self.setWindowTitle("安信可TB模块烧录工具 " + __version__)
+
+        if not os.path.exists('aithinker.png'):
+            tmp = open('aithinker.png', 'wb+')
+            tmp.write(base64.b64decode(logo))
+            tmp.close()
+
         self.setWindowIcon(QIcon("aithinker.png"))
         #self.setWindowFlags(Qt.FramelessWindowHint)
         self.resize(500,300)
@@ -189,19 +199,25 @@ class TB_Tools(QWidget):
         self.tbox_ali_pID = QLineEdit()
         self.tbox_ali_Mac = QLineEdit()
         self.tbox_ali_Sct = QLineEdit()
+
+        self.tbox_ali_pID.setPlaceholderText("Product ID")
+        self.tbox_ali_Mac.setPlaceholderText("MAC地址")
+        self.tbox_ali_Sct.setPlaceholderText("Device Secret")
+
+
         btn_burn_triad=QPushButton("烧录三元组")
         btn_burn_triad.clicked.connect(self.burn_triad_fn)
 
         line_3.addWidget(self.tbox_ali_pID)
-        line_3.addWidget(self.tbox_ali_Mac)
         line_3.addWidget(self.tbox_ali_Sct)
+        line_3.addWidget(self.tbox_ali_Mac)
         line_3.addWidget(btn_burn_triad)
 
         line_3.setContentsMargins(0, 0, 0, 0)
 
-        line_3.setStretch(0, 1)
-        line_3.setStretch(1, 2)
-        line_3.setStretch(2, 5)
+        line_3.setStretch(0, 2)
+        line_3.setStretch(1, 5)
+        line_3.setStretch(2, 2)
         line_3.setStretch(3, 1)
 
 
