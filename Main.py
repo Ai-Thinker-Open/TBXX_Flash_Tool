@@ -11,12 +11,13 @@ import base64
 from PyQt5.QtWidgets import QApplication,QWidget,QTabWidget
 from PyQt5.QtGui import QIcon
 
+from SimpleUpdata import SimpleUpdata
 from aithinker_png import aithinker_png as logo
 
 from TBXX_Flash_Tool import TB_Tools
 from FW_Combin_Tool import FW_Tools
 
-__version__ = "V1.3"
+__version__ = "V1.3 dev"
 
 class MainForm(QTabWidget):
     def __init__(self,parent=None):
@@ -46,4 +47,7 @@ if __name__=="__main__":
     app=QApplication(sys.argv)
     win=MainForm()
     win.show()
+
+    su = SimpleUpdata()
+    su.check_updata('https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/updata.json')
     sys.exit(app.exec_())
