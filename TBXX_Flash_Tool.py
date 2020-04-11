@@ -84,6 +84,10 @@ class TelinkThread(QThread):
             firmware_size = os.path.getsize(self.args.file_name)
             percent=0
 
+            if(firmware_size >= 192 * 1024): # 固件大于192KB，说明是合并好的固件，要跳过Boot
+                fo.seek(16 * 1024, 0)
+                firmware_addr = 16 * 1024
+
             while True:
                 data = fo.read(256)
                 if len(data) < 1: break

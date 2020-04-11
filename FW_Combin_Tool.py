@@ -8,6 +8,7 @@ import os
 import struct
 import time
 import zlib
+import hashlib
 from PyQt5.QtWidgets import QPushButton,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QFileDialog,QLabel
 
 class FW_Tools(QWidget):
@@ -88,31 +89,40 @@ class FW_Tools(QWidget):
 
         boot = open(self.tbox_boot_file.text(), "rb")
         app = open(self.tbox_app_file.text(), "rb")
-        boot_app = open("combine/combine.bin", "w+b")
+        boot_app_file_name= self.tbox_app_file.text().replace('.bin','_with_boot.bin')
+        boot_app = open(boot_app_file_name, "w+b")
 
-        boot_app.write(boot.read())
+        boot_app.write(boot.read()) # 将Boot固件放在合并后固件的前16K
         boot.close()
 
         boot_app.seek(0x4000,0)
         app.seek(0x4000,0)
 
-        boot_app.write(app.read())
+        boot_app.write(app.read()) # APP 固件的 16K 之后的部分 位置不变
 
         boot_app.seek(0x2c000,0)
         app.seek(0x00000,0)
 
-        boot_app.write(app.read(0x4000))
+        boot_app.write(app.read(0x4000)) # 将APP固件的前16K放在合并后固件的0x2C000的位置
         app.close()
 
         boot_app.seek(0, 0)
         file_content = boot_app.read()
-        crc32_result = zlib.crc32(file_content) & 0xffffffff
+        crc32_result = zlib.crc32(file_content) & 0xffffffff # 计算整个文件的CRC
+
+        boot_app.seek(176 * 1024 - 4, 0)
+        boot_app.write(struct.pack('>I', crc32_result)) #RAM Code 前4个字节也放置CRC校验
 
         boot_app.seek(0, 2)
-        boot_app.write(struct.pack('>I', crc32_result))
+        boot_app.write(struct.pack('>I', crc32_result)) #文件的最末尾处，放置CRC校验
+
+        boot_app.seek(0, 0)
+        file_content = boot_app.read()
+        md5_result = hashlib.md5(file_content).hexdigest()
+
         boot_app.close()
 
-        self.log_string("Combine OK!\r\nFirmware CRC32: " + hex(crc32_result) + "\r\n合并好的固件为:combine/combine.bin")
+        self.log_string("Combine OK!\r\nFirmware CRC32: " + hex(crc32_result) +"\r\nFirmware MD5: " + md5_result + "\r\n合并好的固件为:" + boot_app_file_name)
         
     def log_string(self, s): #Log窗口日志输出
         self.tbox_log.append(s)

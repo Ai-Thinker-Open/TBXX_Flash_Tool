@@ -17,7 +17,7 @@ from aithinker_png import aithinker_png as logo
 from TBXX_Flash_Tool import TB_Tools
 from FW_Combin_Tool import FW_Tools
 
-__version__ = "V1.3 dev"
+__version__ = "V1.3.1 dev"
 
 class MainForm(QTabWidget):
     def __init__(self,parent=None):
