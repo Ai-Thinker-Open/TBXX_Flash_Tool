@@ -110,9 +110,11 @@ class SimpleUpdata(QWidget):
             self.close()
         elif(cmd == CMD_UPDATA_OK):#新文件下载成功
             with open("tmp.bat", "w+") as new_file:
-                new_file.write('ping localhost > nul\r\n')
                 new_file.write('del Main.exe\r\n')
-            os.popen('tmp.bat >> b.txt') #执行外部进程删除旧文件，将下载的文件重命名为原文件
+                new_file.write('mv tmp.exe Main.exe\r\n')
+                new_file.write('Main.exe\r\n')
+                new_file.write('exit\r\n')
+            os.system('start /b tmp.bat >> tmp.txt') #执行外部进程删除旧文件，将下载的文件重命名为原文件
             sys.exit()
     
     def set_desc_text(self,txt):#设置更新说明文字
