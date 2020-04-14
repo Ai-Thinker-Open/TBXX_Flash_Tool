@@ -17,7 +17,7 @@ from aithinker_png import aithinker_png as logo
 from TBXX_Flash_Tool import TB_Tools
 from FW_Combin_Tool import FW_Tools
 
-__version__ = "V1.3.1 dev"
+__version__ = "V1.4.0"
 
 class MainForm(QTabWidget):
     def __init__(self,parent=None):
@@ -25,12 +25,14 @@ class MainForm(QTabWidget):
 
         self.setWindowTitle("安信可TB模块调试工具 " + __version__)
 
-        if not os.path.exists('aithinker.png'):
-            tmp = open('aithinker.png', 'wb+')
+        if not os.path.exists("combine/") : os.makedirs("combine/")
+
+        if not os.path.exists('combine/aithinker.png'):
+            tmp = open('combine/aithinker.png', 'wb+')
             tmp.write(base64.b64decode(logo))
             tmp.close()
 
-        self.setWindowIcon(QIcon("aithinker.png"))
+        self.setWindowIcon(QIcon("combine/aithinker.png"))
         self.resize(500,300)
 
         self.tab1=TB_Tools()

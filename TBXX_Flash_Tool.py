@@ -144,10 +144,10 @@ class TB_Tools(QWidget):
 
         self.setWindowTitle("安信可TB模块烧录工具 " + __version__)
 
-        if not os.path.exists('aithinker.png'):
-            tmp = open('aithinker.png', 'wb+')
-            tmp.write(base64.b64decode(logo))
-            tmp.close()
+        # if not os.path.exists('aithinker.png'):
+        #     tmp = open('aithinker.png', 'wb+')
+        #     tmp.write(base64.b64decode(logo))
+        #     tmp.close()
 
         self.setWindowIcon(QIcon("aithinker.png"))
         #self.setWindowFlags(Qt.FramelessWindowHint)
