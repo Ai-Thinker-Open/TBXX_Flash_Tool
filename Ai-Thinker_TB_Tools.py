@@ -16,6 +16,7 @@ from aithinker_png import aithinker_png as logo
 
 from TBXX_Flash_Tool import TB_Tools
 from FW_Combin_Tool import FW_Tools
+from FW_Market import FW_Market
 
 __version__ = "V1.4.0"
 
@@ -38,12 +39,20 @@ class MainForm(QTabWidget):
         self.tab1=TB_Tools()
         self.tab2=FW_Tools()
         self.tab3=QWidget()
-        self.tab4=QWidget()
+        self.tab4=FW_Market()
+        self.tab5=QWidget()
 
         self.addTab(self.tab1, "烧录固件")
         self.addTab(self.tab2, "合并固件")
         self.addTab(self.tab3, "串口调试")
         self.addTab(self.tab4, "固件市场")
+        self.addTab(self.tab5, "开发资料")
+
+        self.currentChanged['int'].connect(self.tabfun)
+    
+    def tabfun(self,index):
+        if (index == 3):
+            self.tab4.my_show()
 
 if __name__=="__main__":
     app=QApplication(sys.argv)
