@@ -52,7 +52,7 @@ class MainForm(QTabWidget):
     
     def tabfun(self,index):
         if (index == 3):
-            self.tab4.my_show()
+            self.tab4.get_fw_list()
 
 if __name__=="__main__":
     app=QApplication(sys.argv)

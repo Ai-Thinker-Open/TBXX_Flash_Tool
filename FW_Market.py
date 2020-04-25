@@ -15,7 +15,7 @@ from lxml import etree
 import re
 from PyQt5.QtWidgets import QPushButton,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QFileDialog,QLabel,QTableWidget,QTableWidgetItem
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon,QPalette,QColor
 
 CMD_SHOW_FORM  = 0x00
 CMD_CLOSE_FORM = 0x01
@@ -35,8 +35,20 @@ class FwThread(QThread):
         self.headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'}
         
     def run(self):
-        global new_file_url
-        if self.action == "get_bin_url":#获取Bin文件的下载地址
+        if self.action == "get_fw_list":#获取github上固件文件列表
+            try:
+                r = requests.get(self.url, timeout=10, headers=self.headers)
+                r.encoding = 'utf-8'#r.apparent_encoding
+            except Exception as e:
+                self.formSignal.emit(CMD_CLOSE_FORM) 
+
+            if r.status_code == 200:
+                tbodys = re.findall('<tbody>([\w\W]+?)</tbody>',r.text)
+                tbody = '<tbody>' + tbodys[0] + '</tbody>'
+
+                self.textSignal.emit(tbody)
+
+        elif self.action == "get_bin_url":#获取Bin文件的下载地址
             try:
                 r = requests.get(self.url, timeout=10, headers=self.headers)
                 r.encoding = 'utf-8'#r.apparent_encoding
@@ -79,26 +91,33 @@ class FW_Market(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
 
-        self.layout=QVBoxLayout()
+        self.layout=QVBoxLayout(self)
 
-        self.tbox_log=QTextEdit()
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(192,253,123,100))
 
-        self.setLayout(self.layout)
+        self.waitPage=QLabel(self)
+
+        self.waitPage.setGeometry(10, 10, 470, 250)
+        self.waitPage.setAlignment(Qt.AlignVCenter ); 
+        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在获取固件列表......</font></center>")
+        self.waitPage.setAutoFillBackground(True)
+        self.waitPage.setPalette(palette)
 
         self.is_First_Show = True
 
-    def my_show(self):
+    def get_fw_list(self):
 
-        if not self.is_First_Show : return
+        if not self.is_First_Show: return
 
-        self.url = 'https://github.com/Ai-Thinker-Open/TB_FW_Market'
-        self.headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'}
-        r = requests.get(self.url,headers=self.headers)
-        r.encoding = 'utf-8'#r.apparent_encoding
-        self.html = r.text
+        self.mThread = FwThread(action="get_fw_list", url="https://github.com/Ai-Thinker-Open/TB_FW_Market")
+        self.mThread.textSignal.connect(self.show_bin_list)
+        self.mThread.start()
 
-        tbodys = re.findall('<tbody>([\w\W]+?)</tbody>',self.html)
-        tbody = '<tbody>' + tbodys[0] + '</tbody>'
+        self.is_First_Show = False
+
+
+    def show_bin_list(self, tbody):
 
         selector = etree.HTML(tbody)        # 转换为lxml解析的对象
         titles = selector.xpath('//td[@class="content"]/span/a/text()')    # 这里返回的是一个列表
@@ -121,10 +140,8 @@ class FW_Market(QWidget):
 
                 rows_index += 1
 
-
+        self.TableWidget.setGeometry(15, 10,300,300)
         self.layout.addWidget(self.TableWidget)
-
-        self.is_First_Show = False
 
         return 0
 
@@ -165,6 +182,10 @@ class FW_Market(QWidget):
         # self.mThread.presSignal.connect(self.pressBar_refresh)
         self.mThread.start()
 
+        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在解析下载地址......</font></center>")
+        self.waitPage.show()
+        self.waitPage.raise_()
+
     def document(self, id):
         print(id)
 
@@ -181,6 +202,8 @@ class FW_Market(QWidget):
             #self.mThread.textSignal.connect(self.save_File)
             # self.mThread.presSignal.connect(self.pressBar_refresh)
             self.mThread.start()
+
+        self.waitPage.hide()
 
 
 if __name__ == '__main__':
