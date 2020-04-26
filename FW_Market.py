@@ -35,6 +35,7 @@ class FwThread(QThread):
         self.headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'}
         
     def run(self):
+        r = None
         if self.action == "get_fw_list":#获取github上固件文件列表
             try:
                 r = requests.get(self.url, timeout=10, headers=self.headers)
@@ -55,6 +56,9 @@ class FwThread(QThread):
             except Exception as e:
                 self.formSignal.emit(CMD_CLOSE_FORM) 
 
+            if r == None:
+                return 
+                
             if r.status_code == 200:
                 tbodys = re.findall('<tbody>([\w\W]+?)</tbody>',r.text)
                 tbody = '<tbody>' + tbodys[0] + '</tbody>'
@@ -84,7 +88,21 @@ class FwThread(QThread):
 
                         self.presSignal.emit(nowJd)
 
-            self.formSignal.emit(CMD_UPDATA_OK)
+        elif self.action == "get_readme":#获取说明文档
+            print(self.url)
+            try:
+                r = requests.get(self.url, timeout=10, headers=self.headers)
+                r.encoding = 'utf-8'#r.apparent_encoding
+            except Exception as e:
+                self.formSignal.emit(CMD_CLOSE_FORM) 
+
+            if r == None:
+                return
+
+            if r.status_code == 200:
+                print(r.text)
+                self.textSignal.emit(r.text)
+
 
 class FW_Market(QWidget):
 
@@ -177,20 +195,21 @@ class FW_Market(QWidget):
 
     def download(self, id):
         self.mThread = FwThread(action="get_bin_url", url="https://github.com/Ai-Thinker-Open/TB_FW_Market/tree/master/" + self.TableWidget.item(id, 0).text())
-        # self.mThread.formSignal.connect(self.show_form)
         self.mThread.textSignal.connect(self.save_File)
-        # self.mThread.presSignal.connect(self.pressBar_refresh)
         self.mThread.start()
 
         self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在解析下载地址......</font></center>")
         self.waitPage.show()
         self.waitPage.raise_()
 
-    def document(self, id):
-        print(id)
-
     def save_File(self, fileUrl):
-        fileName, ok = QFileDialog.getSaveFileName(self, "文件保存", "C:/", "All Files (*);;Bin Files (*.bin)")
+
+        tmp = re.findall('master/([\w\W]+?).bin', fileUrl)
+        tmp = tmp[0].strip() + '.bin'
+        tmp = re.findall('/([\w\W]+?).bin', tmp)
+        raw_fileName = tmp[0].strip() + '.bin'
+
+        fileName, ok = QFileDialog.getSaveFileName(self, "文件保存", "./combine/" + raw_fileName, "All Files (*);;Bin Files (*.bin)")
 
         fileUrl.replace('blob/','')
         print("https://raw.githubusercontent.com" + fileUrl)
@@ -198,12 +217,21 @@ class FW_Market(QWidget):
             print(fileName)
 
             self.mThread = FwThread(action="down_bin", url="https://raw.githubusercontent.com" + fileUrl, fileName = fileName)
-            # self.mThread.formSignal.connect(self.show_form)
-            #self.mThread.textSignal.connect(self.save_File)
-            # self.mThread.presSignal.connect(self.pressBar_refresh)
             self.mThread.start()
 
         self.waitPage.hide()
+
+    def document(self, id):
+        self.mThread = FwThread(action="get_readme", url="https://raw.githubusercontent.com/Ai-Thinker-Open/TB_FW_Market/master/" + self.TableWidget.item(id, 0).text() + "/README.md")
+        self.mThread.textSignal.connect(self.show_document)
+        self.mThread.start()
+        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在获取文档......</font></center>")
+        self.waitPage.show()
+        self.waitPage.raise_()
+
+    def show_document(self, readme):
+        print(readme)
+        self.waitPage.setText(readme)
 
 
 if __name__ == '__main__':

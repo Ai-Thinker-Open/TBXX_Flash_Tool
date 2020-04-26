@@ -18,7 +18,7 @@ from TBXX_Flash_Tool import TB_Tools
 from FW_Combin_Tool import FW_Tools
 from FW_Market import FW_Market
 
-__version__ = "V1.4.0"
+__version__ = "V1.4.1 dev"
 
 class MainForm(QTabWidget):
     def __init__(self,parent=None):
