@@ -13,9 +13,11 @@ import requests
 from contextlib import closing
 from lxml import etree
 import re
-from PyQt5.QtWidgets import QPushButton,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QFileDialog,QLabel,QTableWidget,QTableWidgetItem
+import markdown
+from PyQt5.QtWidgets import QPushButton,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QFileDialog,QLabel
+from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem,QAbstractItemView,QFrame,QHeaderView
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
-from PyQt5.QtGui import QIcon,QPalette,QColor
+from PyQt5.QtGui import QIcon,QPalette,QColor,QFont
 
 CMD_SHOW_FORM  = 0x00
 CMD_CLOSE_FORM = 0x01
@@ -33,75 +35,74 @@ class FwThread(QThread):
         self.fileName = fileName
 
         self.headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'}
+        print(action + " : " + url)
         
     def run(self):
-        r = None
-        if self.action == "get_fw_list":#获取github上固件文件列表
-            try:
-                r = requests.get(self.url, timeout=10, headers=self.headers)
-                r.encoding = 'utf-8'#r.apparent_encoding
-            except Exception as e:
-                self.formSignal.emit(CMD_CLOSE_FORM) 
 
-            if r.status_code == 200:
-                tbodys = re.findall('<tbody>([\w\W]+?)</tbody>',r.text)
-                tbody = '<tbody>' + tbodys[0] + '</tbody>'
-
-                self.textSignal.emit(tbody)
-
-        elif self.action == "get_bin_url":#获取Bin文件的下载地址
-            try:
-                r = requests.get(self.url, timeout=10, headers=self.headers)
-                r.encoding = 'utf-8'#r.apparent_encoding
-            except Exception as e:
-                self.formSignal.emit(CMD_CLOSE_FORM) 
-
-            if r == None:
-                return 
-                
-            if r.status_code == 200:
-                tbodys = re.findall('<tbody>([\w\W]+?)</tbody>',r.text)
-                tbody = '<tbody>' + tbodys[0] + '</tbody>'
-
-                selector = etree.HTML(tbody)        # 转换为lxml解析的对象
-                titles = selector.xpath('//td[@class="content"]/span/a/@href')    # 这里返回的是一个列表
-
-                for each in titles:
-                    title = each.strip()        # 去掉字符左右的空格
-                    if title.find('.bin') > 0:
-                        print(title)
-                        self.textSignal.emit(title)
-                        break
-
-
-        elif self.action == "down_bin":#下载Bin文件
+        if self.action == "down_bin":#下载Bin文件
 
             with closing(requests.get(self.url, headers=self.headers,stream=True)) as response:
                 chunkSize = 1024
-                contentSize = int(response.headers['content-length'])
                 dateCount = 0
                 with open(self.fileName,"wb") as file:
                     for data in response.iter_content(chunk_size=chunkSize):
                         file.write(data)
                         dateCount = dateCount + len(data)
-                        nowJd = (dateCount / contentSize) * 100
+            return
 
-                        self.presSignal.emit(nowJd)
+        r = None
+        try:
+            r = requests.get(self.url, timeout=10, headers=self.headers)
+            r.encoding = 'utf-8'#r.apparent_encoding
+        except Exception as e:
+            self.formSignal.emit(CMD_CLOSE_FORM) 
 
-        elif self.action == "get_readme":#获取说明文档
-            print(self.url)
-            try:
-                r = requests.get(self.url, timeout=10, headers=self.headers)
-                r.encoding = 'utf-8'#r.apparent_encoding
-            except Exception as e:
-                self.formSignal.emit(CMD_CLOSE_FORM) 
+        if r == None:
+            self.formSignal.emit(CMD_CLOSE_FORM) 
+            return 
 
-            if r == None:
-                return
+        if self.action == "get_fw_list":#获取gitee上固件文件列表
 
             if r.status_code == 200:
-                print(r.text)
+                tbodys = re.findall('<div class=\'grid list selection([\w\W]+?)<div class=\'ui tree_progress\'>',r.text)
+                tbody = '<div class=\'grid list selection' + tbodys[0]
+
+                self.textSignal.emit(tbody)
+
+        elif self.action == "get_bin_url":#获取Bin文件的下载地址
+
+            if r.status_code == 200:
+                tbodys = re.findall('<div class=\'grid list selection([\w\W]+?)<div class=\'ui tree_progress\'>',r.text)
+                tbody = '<div class=\'grid list selection' + tbodys[0]
+
+                selector = etree.HTML(tbody)        # 转换为lxml解析的对象
+                titles = selector.xpath('//div/div[@data-type="file"]/div[@data-type="file"]/a/@href')    # 这里返回的是一个列表
+
+                for each in titles:
+                    title = each.strip()        # 去掉字符左右的空格
+                    if title.find('.bin') > 0:
+                        self.textSignal.emit(title)
+                        break
+
+                self.formSignal.emit(CMD_CLOSE_FORM) # 获取下载地址失败
+
+        elif self.action == "get_readme":#获取说明文档
+            if r.status_code == 200:
                 self.textSignal.emit(r.text)
+
+class Doc_From(QWidget): # 用来显示文档的窗口
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        self.waitPage=QLabel(self)
+        self.waitPage.setGeometry(5, 5, 600, 350)
+        # self.waitPage.setAlignment(Qt.AlignVCenter)
+        self.waitPage.setAutoFillBackground(True)
+
+    def set_readme(self,readme):
+        self.waitPage.setText(markdown.markdown(readme))
+    
+    def set_title():
+        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在设置Title......</font></center>")
 
 
 class FW_Market(QWidget):
@@ -116,8 +117,8 @@ class FW_Market(QWidget):
 
         self.waitPage=QLabel(self)
 
-        self.waitPage.setGeometry(10, 10, 470, 250)
-        self.waitPage.setAlignment(Qt.AlignVCenter ); 
+        self.waitPage.setGeometry(0, 0, 600, 350)
+        self.waitPage.setAlignment(Qt.AlignVCenter)
         self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在获取固件列表......</font></center>")
         self.waitPage.setAutoFillBackground(True)
         self.waitPage.setPalette(palette)
@@ -128,8 +129,9 @@ class FW_Market(QWidget):
 
         if not self.is_First_Show: return
 
-        self.mThread = FwThread(action="get_fw_list", url="https://github.com/Ai-Thinker-Open/TB_FW_Market")
+        self.mThread = FwThread(action="get_fw_list", url='https://gitee.com/ospanic/TB_FW_Market')
         self.mThread.textSignal.connect(self.show_bin_list)
+        self.mThread.formSignal.connect(self.waitPag_State)
         self.mThread.start()
 
         self.is_First_Show = False
@@ -138,27 +140,58 @@ class FW_Market(QWidget):
     def show_bin_list(self, tbody):
 
         selector = etree.HTML(tbody)        # 转换为lxml解析的对象
-        titles = selector.xpath('//td[@class="content"]/span/a/text()')    # 这里返回的是一个列表
 
-        self.TableWidget=QTableWidget(4,2)
+        contents = selector.xpath('//div/div[@data-type="folder"]/div[@data-type="folder"]/a/text()')    # 这里返回的是一个列表
+        messages = selector.xpath('//div/div[@data-type="folder"]/div/div[@class="commit-details"]/a/text()')    # 这里返回的是一个列表
+        timeagos = selector.xpath('//div/div[@data-type="folder"]/div/span[@class="timeago"]/@datetime')    # 这里返回的是一个列表
+
+        print(contents)
+        print(messages)
+        print(timeagos)
+
+        self.TableWidget=QTableWidget()
+        self.TableWidget.setColumnCount(4) # 表格共有四列
         self.TableWidget.verticalHeader().setVisible(False)  # 隐藏垂直表头
-        self.TableWidget.horizontalHeader().setVisible(False)  # 隐藏水平表头
-        self.TableWidget.setColumnWidth(0,400)
-        self.TableWidget.setColumnWidth(1,70)
+        self.TableWidget.horizontalHeader().setVisible(True)  # 显示水平表头
+
+        font = QFont('微软雅黑', 10)
+        font.setBold(True)  #设置字体加粗
+        self.TableWidget.horizontalHeader().setFont(font) #设置表头字体
+
+        # self.TableWidget.setFrameShape(QFrame.NoFrame)  ##设置无表格的外框
+        self.TableWidget.horizontalHeader().setFixedHeight(25) ##设置表头高度
+
+        self.TableWidget.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)#设置第一列宽度自动调整，充满屏幕
+        # self.TableWidget.horizontalHeader().setStretchLastSection(True) ##设置最后一列拉伸至最大
+
+        self.TableWidget.setHorizontalHeaderLabels(['固件名称','固件版本','更新日期','操作']) #设置表头内容
+        self.TableWidget.horizontalHeader().setSectionsClickable(False)
+        self.TableWidget.horizontalHeader().setStyleSheet('QHeaderView::section{background:green}')#设置表头的背景色为绿色
+
+        self.TableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers) # 不可编辑
+        self.TableWidget.setSelectionBehavior(QAbstractItemView.SelectRows) #只能选择整行
+
+        self.TableWidget.setColumnWidth(1,100)
+        self.TableWidget.setColumnWidth(2,130)
+        self.TableWidget.setColumnWidth(3,100)
 
         rows = self.TableWidget.rowCount()
         rows_index = 0
 
-        for each in titles:
-            title = each.strip()        # 去掉字符左右的空格
-            if title.find('@') > 0:
-                newItem=QTableWidgetItem(title)
-                self.TableWidget.setItem(rows_index, 0, newItem)
-                self.TableWidget.setCellWidget(rows_index, 1, self.buttonForRow(rows_index))
-
+        for content, message, timeago in zip(contents, messages, timeagos):
+            content = content.strip()        # 去掉字符左右的空格
+            if content.find('@') > 0:
+                message = message.strip()
+                timeago = timeago.strip()
+                self.TableWidget.setRowCount(rows_index + 1)
+                self.TableWidget.setItem(rows_index, 0, QTableWidgetItem(content))
+                self.TableWidget.setItem(rows_index, 1, QTableWidgetItem(message))
+                self.TableWidget.setItem(rows_index, 2, QTableWidgetItem(timeago))
+                self.TableWidget.setCellWidget(rows_index, 3, self.buttonForRow(rows_index))
                 rows_index += 1
 
         self.TableWidget.setGeometry(15, 10,300,300)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addWidget(self.TableWidget)
 
         return 0
@@ -194,8 +227,9 @@ class FW_Market(QWidget):
         return widget
 
     def download(self, id):
-        self.mThread = FwThread(action="get_bin_url", url="https://github.com/Ai-Thinker-Open/TB_FW_Market/tree/master/" + self.TableWidget.item(id, 0).text())
+        self.mThread = FwThread(action="get_bin_url", url='https://gitee.com/ospanic/TB_FW_Market/tree/master/' + self.TableWidget.item(id, 0).text())
         self.mThread.textSignal.connect(self.save_File)
+        self.mThread.formSignal.connect(self.waitPag_State)
         self.mThread.start()
 
         self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在解析下载地址......</font></center>")
@@ -210,28 +244,33 @@ class FW_Market(QWidget):
         raw_fileName = tmp[0].strip() + '.bin'
 
         fileName, ok = QFileDialog.getSaveFileName(self, "文件保存", "./combine/" + raw_fileName, "All Files (*);;Bin Files (*.bin)")
-
-        fileUrl.replace('blob/','')
-        print("https://raw.githubusercontent.com" + fileUrl)
+        fileUrl = fileUrl.replace('/blob/','/raw/')
         if ok:
             print(fileName)
 
-            self.mThread = FwThread(action="down_bin", url="https://raw.githubusercontent.com" + fileUrl, fileName = fileName)
+            self.mThread = FwThread(action="down_bin", url="https://gitee.com" + fileUrl, fileName = fileName)
             self.mThread.start()
 
         self.waitPage.hide()
 
     def document(self, id):
-        self.mThread = FwThread(action="get_readme", url="https://raw.githubusercontent.com/Ai-Thinker-Open/TB_FW_Market/master/" + self.TableWidget.item(id, 0).text() + "/README.md")
+        self.mThread = FwThread(action="get_readme", url="https://gitee.com/ospanic/TB_FW_Market/raw/master/" + self.TableWidget.item(id, 0).text() + "/README.md")
         self.mThread.textSignal.connect(self.show_document)
+        self.mThread.formSignal.connect(self.waitPag_State)
         self.mThread.start()
         self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在获取文档......</font></center>")
         self.waitPage.show()
         self.waitPage.raise_()
 
     def show_document(self, readme):
-        print(readme)
-        self.waitPage.setText(readme)
+        self.waitPage.hide()
+        self.win = Doc_From()
+        self.win.set_readme(readme)
+        self.win.show()
+
+    def waitPag_State(self, state):
+        if state == CMD_CLOSE_FORM:
+            self.waitPage.hide()
 
 
 if __name__ == '__main__':
