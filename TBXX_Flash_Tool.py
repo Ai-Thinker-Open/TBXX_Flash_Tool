@@ -166,6 +166,7 @@ class TB_Tools(QWidget):
         btn_erase_key=QPushButton("擦除Mesh Key")
         btn_erase_all=QPushButton("整片擦除")
         btn_rst_chip =QPushButton("复位芯片")
+        btn_clean_scn=QPushButton("清空窗口")
 
         btn_refresh_p.clicked.connect(self.refresh_p_fn)
         btn_erase_fw.clicked.connect (lambda:self.erase_fn("fw"))
@@ -173,6 +174,7 @@ class TB_Tools(QWidget):
         btn_erase_all.clicked.connect(lambda:self.erase_fn("all"))
 
         btn_rst_chip.clicked.connect(self.rst_chip_fn)
+        btn_clean_scn.clicked.connect(self.clean_screen_fn)
 
         line_1.addWidget(self.serial_cb)
         line_1.addWidget(btn_refresh_p)
@@ -180,6 +182,7 @@ class TB_Tools(QWidget):
         line_1.addWidget(btn_erase_key)
         line_1.addWidget(btn_erase_all)
         line_1.addWidget(btn_rst_chip)
+        line_1.addWidget(btn_clean_scn)
 
         line_1.setContentsMargins(0, 0, 0, 0)
 
@@ -243,6 +246,10 @@ class TB_Tools(QWidget):
         for i in range(0, len(plist)):
             plist_0 = list(plist[i])
             self.serial_cb.addItem(str(plist_0[0]))
+
+    def clean_screen_fn(self):
+        self.tbox_log.clear()
+        self.tbox_log.setStyleSheet("background-color:white;")
 
     def erase_fn(self, action):#擦除Flash
         if not len(self.serial_cb.currentText()) > 0 :
