@@ -13,11 +13,16 @@ import requests
 from contextlib import closing
 from lxml import etree
 import re
-import markdown
+import markdown2
+from mdx_math import MathExtension
 from PyQt5.QtWidgets import QPushButton,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QFileDialog,QLabel
 from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem,QAbstractItemView,QFrame,QHeaderView
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
 from PyQt5.QtGui import QIcon,QPalette,QColor,QFont
+
+from Markdown_CSS import html_head
+from Markdown_CSS import html_tail
+from Markdown_CSS import html_test
 
 CMD_SHOW_FORM  = 0x00
 CMD_CLOSE_FORM = 0x01
@@ -93,16 +98,23 @@ class FwThread(QThread):
 class Doc_From(QWidget): # 用来显示文档的窗口
     def __init__(self,parent=None):
         super().__init__(parent)
-        self.waitPage=QLabel(self)
-        self.waitPage.setGeometry(5, 5, 600, 350)
-        # self.waitPage.setAlignment(Qt.AlignVCenter)
-        self.waitPage.setAutoFillBackground(True)
+
+        if os.path.exists('combine/aithinker.png'): self.setWindowIcon(QIcon("combine/aithinker.png"))
+
+        self.docPage=QTextEdit(self)
+        self.docPage.setGeometry(5, 5, 600, 350)
+        self.docPage.setReadOnly(True)
+        self.docPage.setStyleSheet("background:transparent;border-width:0;border-style:outset")
+        
 
     def set_readme(self,readme):
-        self.waitPage.setText(markdown.markdown(readme))
+        exts = extras = ['code-friendly', 'fenced-code-blocks', 'footnotes','tables','code-color','pyshell','nofollow','cuddled-lists','header ids','nofollow']
+        self.docPage.setHtml(html_head + markdown2.markdown(readme, extras=exts) + html_tail)
+        # self.docPage.setHtml(markdown2.markdown(readme, extras=exts))
+        # self.docPage.setText(html_test)
     
-    def set_title():
-        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在设置Title......</font></center>")
+    def set_title(self, title):
+        self.setWindowTitle(title)
 
 
 class FW_Market(QWidget):
@@ -129,7 +141,7 @@ class FW_Market(QWidget):
 
         if not self.is_First_Show: return
 
-        self.mThread = FwThread(action="get_fw_list", url='https://gitee.com/ospanic/TB_FW_Market')
+        self.mThread = FwThread(action="get_fw_list", url='https://gitee.com/Ai-Thinker-Open/TB_FW_Market')
         self.mThread.textSignal.connect(self.show_bin_list)
         self.mThread.formSignal.connect(self.waitPag_State)
         self.mThread.start()
@@ -227,7 +239,7 @@ class FW_Market(QWidget):
         return widget
 
     def download(self, id):
-        self.mThread = FwThread(action="get_bin_url", url='https://gitee.com/ospanic/TB_FW_Market/tree/master/' + self.TableWidget.item(id, 0).text())
+        self.mThread = FwThread(action="get_bin_url", url='https://gitee.com/Ai-Thinker-Open/TB_FW_Market/tree/master/' + self.TableWidget.item(id, 0).text())
         self.mThread.textSignal.connect(self.save_File)
         self.mThread.formSignal.connect(self.waitPag_State)
         self.mThread.start()
@@ -254,7 +266,7 @@ class FW_Market(QWidget):
         self.waitPage.hide()
 
     def document(self, id):
-        self.mThread = FwThread(action="get_readme", url="https://gitee.com/ospanic/TB_FW_Market/raw/master/" + self.TableWidget.item(id, 0).text() + "/README.md")
+        self.mThread = FwThread(action="get_readme", url="https://gitee.com/Ai-Thinker-Open/TB_FW_Market/raw/master/" + self.TableWidget.item(id, 0).text() + "/README.md")
         self.mThread.textSignal.connect(self.show_document)
         self.mThread.formSignal.connect(self.waitPag_State)
         self.mThread.start()
@@ -262,10 +274,13 @@ class FW_Market(QWidget):
         self.waitPage.show()
         self.waitPage.raise_()
 
+        self.docPage_Title = self.TableWidget.item(id, 0).text() + " 固件使用说明"
+
     def show_document(self, readme):
         self.waitPage.hide()
         self.win = Doc_From()
         self.win.set_readme(readme)
+        self.win.set_title(self.docPage_Title)
         self.win.show()
 
     def waitPag_State(self, state):
