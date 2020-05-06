@@ -18,8 +18,9 @@ from TBXX_Flash_Tool import TB_Tools
 from FW_Combin_Tool import FW_Tools
 from FW_Market import FW_Market
 from SP_Tools import SP_Tools
+from Dev_Document import Dev_Document
 
-__version__ = "V1.4.2 dev"
+__version__ = "V1.5.0"
 
 class MainForm(QTabWidget):
     def __init__(self,parent=None):
@@ -40,7 +41,7 @@ class MainForm(QTabWidget):
         self.tab_TB_Tools=TB_Tools()
         self.tab_SP_Tools=SP_Tools()
         self.tab_FW_Market=FW_Market()
-        self.tab_Dev_Doc=QWidget()
+        self.tab_Dev_Doc=Dev_Document()
         self.tab_FW_Tools=FW_Tools()
 
         self.addTab(self.tab_TB_Tools, "烧录固件")
@@ -54,6 +55,8 @@ class MainForm(QTabWidget):
     def tabfun(self,index):
         if (index == 2):
             self.tab_FW_Market.get_fw_list()
+        elif (index == 3):
+            self.tab_Dev_Doc.get_doc_list()
 
 if __name__=="__main__":
     app=QApplication(sys.argv)

@@ -16,7 +16,7 @@ import re
 import markdown2
 from mdx_math import MathExtension
 from PyQt5.QtWidgets import QPushButton,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QFileDialog,QLabel
-from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem,QAbstractItemView,QFrame,QHeaderView
+from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem,QAbstractItemView,QFrame,QHeaderView,QMessageBox
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
 from PyQt5.QtGui import QIcon,QPalette,QColor,QFont
 
@@ -27,6 +27,7 @@ from Markdown_CSS import html_test
 CMD_SHOW_FORM  = 0x00
 CMD_CLOSE_FORM = 0x01
 CMD_UPDATA_OK  = 0x02
+CMD_DOWNLOAD_OK = 0x03
 
 class FwThread(QThread):
     formSignal = pyqtSignal(int)
@@ -53,6 +54,7 @@ class FwThread(QThread):
                     for data in response.iter_content(chunk_size=chunkSize):
                         file.write(data)
                         dateCount = dateCount + len(data)
+            self.formSignal.emit(CMD_DOWNLOAD_OK) 
             return
 
         r = None
@@ -261,9 +263,11 @@ class FW_Market(QWidget):
             print(fileName)
 
             self.mThread = FwThread(action="down_bin", url="https://gitee.com" + fileUrl, fileName = fileName)
+            self.mThread.formSignal.connect(self.waitPag_State)
             self.mThread.start()
-
-        self.waitPage.hide()
+            self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在下载文档......</font></center>")
+        else:
+            self.waitPage.hide()
 
     def document(self, id):
         self.mThread = FwThread(action="get_readme", url="https://gitee.com/Ai-Thinker-Open/TB_FW_Market/raw/master/" + self.TableWidget.item(id, 0).text() + "/README.md")
@@ -286,6 +290,9 @@ class FW_Market(QWidget):
     def waitPag_State(self, state):
         if state == CMD_CLOSE_FORM:
             self.waitPage.hide()
+        elif state == CMD_DOWNLOAD_OK:
+            self.waitPage.hide()
+            QMessageBox.information(self,"温馨提示","下载成功！")
 
 
 if __name__ == '__main__':
