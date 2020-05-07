@@ -92,7 +92,7 @@ class Dev_Document(QWidget):
 
         self.waitPage.setGeometry(0, 0, 600, 350)
         self.waitPage.setAlignment(Qt.AlignVCenter)
-        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在获取文档列表......</font></center>")
+        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>Getting list of documents......</font></center>")
         self.waitPage.setAutoFillBackground(True)
         self.waitPage.setPalette(palette)
 
@@ -125,7 +125,7 @@ class Dev_Document(QWidget):
         self.TableWidget.verticalHeader().setVisible(False)  # 隐藏垂直表头
         self.TableWidget.horizontalHeader().setVisible(True)  # 显示水平表头
 
-        font = QFont('微软雅黑', 10)
+        font = QFont('Arial', 10)
         font.setBold(True)  #设置字体加粗
         self.TableWidget.horizontalHeader().setFont(font) #设置表头字体
 
@@ -135,7 +135,7 @@ class Dev_Document(QWidget):
         self.TableWidget.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)#设置第一列宽度自动调整，充满屏幕
         # self.TableWidget.horizontalHeader().setStretchLastSection(True) ##设置最后一列拉伸至最大
 
-        self.TableWidget.setHorizontalHeaderLabels(['文档名称','文档介绍','操作']) #设置表头内容
+        self.TableWidget.setHorizontalHeaderLabels(['file name','Document introduction','operating']) #Set header content
         self.TableWidget.horizontalHeader().setSectionsClickable(False)
         self.TableWidget.horizontalHeader().setStyleSheet('QHeaderView::section{background:green}')#设置表头的背景色为绿色
 
@@ -167,7 +167,7 @@ class Dev_Document(QWidget):
     def buttonForRow(self,id):
         widget=QWidget()
         # 修改
-        downloadBtn = QPushButton('下载')
+        downloadBtn = QPushButton('download')
         downloadBtn.setStyleSheet(''' text-align : center;
         background-color : NavajoWhite;
         height : 30px;
@@ -184,7 +184,7 @@ class Dev_Document(QWidget):
 
     def download(self, id):
 
-        fileName, ok = QFileDialog.getSaveFileName(self, "文件保存", "./combine/" + self.TableWidget.item(id, 0).text(), "All Files (*);;Bin Files (*.pdf)")
+        fileName, ok = QFileDialog.getSaveFileName(self, "Save file", "./combine/" + self.TableWidget.item(id, 0).text(), "All Files (*);;Bin Files (*.pdf)")
         if ok:
             print(fileName)
 
@@ -192,7 +192,7 @@ class Dev_Document(QWidget):
             self.mThread.formSignal.connect(self.waitPag_State)
             self.mThread.start()
 
-            self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在下载文档......</font></center>")
+            self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>Downloading document......</font></center>")
             self.waitPage.show()
             self.waitPage.raise_()
 
@@ -201,4 +201,4 @@ class Dev_Document(QWidget):
             self.waitPage.hide()
         elif state == CMD_DOWNLOAD_OK:
             self.waitPage.hide()
-            QMessageBox.information(self,"温馨提示","下载成功！")
+            QMessageBox.information(self,"Warning","download successful!")

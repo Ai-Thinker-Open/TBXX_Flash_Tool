@@ -168,7 +168,7 @@ class FW_Market(QWidget):
         self.TableWidget.verticalHeader().setVisible(False)  # 隐藏垂直表头
         self.TableWidget.horizontalHeader().setVisible(True)  # 显示水平表头
 
-        font = QFont('微软雅黑', 10)
+        font = QFont('Arial', 10)
         font.setBold(True)  #设置字体加粗
         self.TableWidget.horizontalHeader().setFont(font) #设置表头字体
 
@@ -178,7 +178,7 @@ class FW_Market(QWidget):
         self.TableWidget.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)#设置第一列宽度自动调整，充满屏幕
         # self.TableWidget.horizontalHeader().setStretchLastSection(True) ##设置最后一列拉伸至最大
 
-        self.TableWidget.setHorizontalHeaderLabels(['固件名称','固件版本','更新日期','操作']) #设置表头内容
+        self.TableWidget.setHorizontalHeaderLabels(['Firmware name','Firmware version','Updated','operating']) #设置表头内容
         self.TableWidget.horizontalHeader().setSectionsClickable(False)
         self.TableWidget.horizontalHeader().setStyleSheet('QHeaderView::section{background:green}')#设置表头的背景色为绿色
 
@@ -214,7 +214,7 @@ class FW_Market(QWidget):
     def buttonForRow(self,id):
         widget=QWidget()
         # 修改
-        downloadBtn = QPushButton('下载')
+        downloadBtn = QPushButton('download')
         downloadBtn.setStyleSheet(''' text-align : center;
         background-color : NavajoWhite;
         height : 30px;
@@ -224,7 +224,7 @@ class FW_Market(QWidget):
         downloadBtn.clicked.connect(lambda:self.download(id))
 
         # 查看
-        docBtn = QPushButton('文档')
+        docBtn = QPushButton('Doc')
         docBtn.setStyleSheet(''' text-align : center;
         background-color : DarkSeaGreen;
         height : 30px;
@@ -257,7 +257,7 @@ class FW_Market(QWidget):
         tmp = re.findall('/([\w\W]+?).bin', tmp)
         raw_fileName = tmp[0].strip() + '.bin'
 
-        fileName, ok = QFileDialog.getSaveFileName(self, "文件保存", "./combine/" + raw_fileName, "All Files (*);;Bin Files (*.bin)")
+        fileName, ok = QFileDialog.getSaveFileName(self, "Save file", "./combine/" + raw_fileName, "All Files (*);;Bin Files (*.bin)")
         fileUrl = fileUrl.replace('/blob/','/raw/')
         if ok:
             print(fileName)
@@ -265,7 +265,7 @@ class FW_Market(QWidget):
             self.mThread = FwThread(action="down_bin", url="https://gitee.com" + fileUrl, fileName = fileName)
             self.mThread.formSignal.connect(self.waitPag_State)
             self.mThread.start()
-            self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在下载文档......</font></center>")
+            self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>Downloading document......</font></center>")
         else:
             self.waitPage.hide()
 
@@ -274,11 +274,11 @@ class FW_Market(QWidget):
         self.mThread.textSignal.connect(self.show_document)
         self.mThread.formSignal.connect(self.waitPag_State)
         self.mThread.start()
-        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>正在获取文档......</font></center>")
+        self.waitPage.setText("<center><font color='red' size='6' line-height='50px';><red>Fetching documents......</font></center>")
         self.waitPage.show()
         self.waitPage.raise_()
 
-        self.docPage_Title = self.TableWidget.item(id, 0).text() + " 固件使用说明"
+        self.docPage_Title = self.TableWidget.item(id, 0).text() + " Firmware instructions"
 
     def show_document(self, readme):
         self.waitPage.hide()
@@ -292,7 +292,7 @@ class FW_Market(QWidget):
             self.waitPage.hide()
         elif state == CMD_DOWNLOAD_OK:
             self.waitPage.hide()
-            QMessageBox.information(self,"温馨提示","下载成功！")
+            QMessageBox.information(self,"warning","download successful!")
 
 
 if __name__ == '__main__':
