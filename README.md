@@ -2,8 +2,7 @@
 
 此工具用于安信可TB系列模块烧录固件三元组等等操作，目前支持```TB-01```，```TB-02```。
 
-最新Windows版图形界面烧录工具下载地址：https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools.exe
-
+最新Windows版图形界面烧录工具下载地址：https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe
 ## 工具原理介绍
 此工具使用python语言编写，有命令行和图形界面连个版本。命令行版本效率高，方便集成; 图形界面版本操作简单直观，易于上手。
 
@@ -24,7 +23,7 @@
 |  Tx       |  Rx    |
 |  Rx       |  Tx    |
 |  RTS      |  VCC   |
-|  DTR      |  SWS   |
+|  DTR      |  SWS(背后圆点)   |
 
 ### TB-02模块接线方法：
 
