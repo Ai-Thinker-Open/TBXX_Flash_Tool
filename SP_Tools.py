@@ -37,6 +37,7 @@ class SP_Thread(QThread):
 
         try:
             self._port = tl_open_port(self._port_name)
+            self._port.baudrate = int(self._baudRate)
         except Exception:
             self.textSignal.emit("串口 " + self._port_name + " 打开失败，请检查串口是否被占用！！！")
             self.stateSignal.emit(1)

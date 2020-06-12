@@ -302,6 +302,11 @@ class TB_Tools(QWidget):
             self.tbox_file.setStyleSheet("background-color:red;")
             return
 
+        if not os.path.exists(self.tbox_file.text()):
+            self.log_string("固件不存在！！！")
+            self.tbox_file.setStyleSheet("background-color:red;")
+            return
+
         if not len(self.serial_cb.currentText()) > 0 :
             self.log_string("请选择串口号！！！")
             return

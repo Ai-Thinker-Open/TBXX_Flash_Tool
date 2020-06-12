@@ -37,10 +37,15 @@ class UpdataThread(QThread):
     def run(self):
         global new_file_url
         if self.action == "check":#检查是否需要更新
+            r = None
             try:
                 r = requests.get(self.args, timeout=5)
             except Exception as e:
                 self.formSignal.emit(CMD_CLOSE_FORM) 
+
+            if r == None:
+                self.formSignal.emit(CMD_CLOSE_FORM) 
+                return 
 
             if r.status_code == 200:
                 data = r.json()
