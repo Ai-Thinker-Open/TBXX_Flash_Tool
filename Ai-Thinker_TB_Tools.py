@@ -26,7 +26,7 @@ class MainForm(QTabWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("安信可TB模块调试工具 " + __version__)
+        self.setWindowTitle("Anxinke TB module debugging tool " + __version__)
 
         if not os.path.exists("combine/") : os.makedirs("combine/")
 
@@ -44,11 +44,11 @@ class MainForm(QTabWidget):
         self.tab_Dev_Doc=Dev_Document()
         self.tab_FW_Tools=FW_Tools()
 
-        self.addTab(self.tab_TB_Tools, "烧录固件")
-        self.addTab(self.tab_SP_Tools, "串口调试")
-        self.addTab(self.tab_FW_Market,"固件市场")
-        self.addTab(self.tab_Dev_Doc,  "开发资料")
-        self.addTab(self.tab_FW_Tools, "合并固件")
+        self.addTab(self.tab_TB_Tools, "Burn firmware")
+        self.addTab(self.tab_SP_Tools, "Serial debugging")
+        self.addTab(self.tab_FW_Market,"Firmware market")
+        self.addTab(self.tab_Dev_Doc,  "Development materials")
+        self.addTab(self.tab_FW_Tools, "Merge firmware")
 
         self.currentChanged['int'].connect(self.tabfun)
     

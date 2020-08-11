@@ -88,16 +88,16 @@ class SimpleUpdata(QWidget):
         super().__init__(parent)
 
         self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.setWindowTitle("发现新版本")
+        self.setWindowTitle("New version found")
 
         self.resize(300,80)
 
         self.lable=QLabel()
 
         line_btn=QHBoxLayout()
-        btn_updata =QPushButton("立即更新")
-        btn_ignore =QPushButton("忽略该版本")
-        btn_next   =QPushButton("下次提醒我")
+        btn_updata =QPushButton("update immediately")
+        btn_ignore =QPushButton("Ignore this version")
+        btn_next   =QPushButton("Remind me next time")
 
         btn_updata.clicked.connect(self.updata)
         btn_ignore.clicked.connect(self.ignore)
@@ -131,7 +131,7 @@ class SimpleUpdata(QWidget):
             self.close()
         elif(cmd == CMD_UPDATA_OK):#新文件下载成功
 
-            reply = QMessageBox.information(self, '升级成功', '请重新打开软件！！！')
+            reply = QMessageBox.information(self, 'update successed', 'Please reopen the software! ! !')
 
             with open("combine/tmp.bat", "w+") as new_file:
                 new_file.write('del ' + sys.argv[0] + '\r\n')

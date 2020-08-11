@@ -33,14 +33,14 @@ class TelinkThread(QThread):
         try:
             _port = tl_open_port(self._port_name)
         except Exception:
-            self.textSignal.emit("串口 " + self._port_name + " 打开失败，请检查串口是否被占用！！！")
+            self.textSignal.emit("Serial port " + self._port_name + " Open failed, please check whether the serial port is occupied!")
             self.pressbarSignal.emit(200)
             return
 
         self.pressbarSignal.emit(1000)
-        self.textSignal.emit("打开串口成功！！！")
+        self.textSignal.emit("Successfully opened the serial port!")
 
-        if self.action == "reset":#复位模组，进入运行模式
+        if self.action == "reset":#Reset the module and enter the operating mode
             _port.setRTS(True)
             _port.setDTR(False)
 
@@ -48,43 +48,43 @@ class TelinkThread(QThread):
 
             _port.setRTS(False)
 
-            self.textSignal.emit("模组已复位！！！")
+            self.textSignal.emit("Module has been reset!")
             self.pressbarSignal.emit(100)
             _port.close()
             return
 
-        if not connect_chip(_port): #连接芯片，进入烧录模式
-            self.textSignal.emit("连接芯片失败！！！")
+        if not connect_chip(_port): #Connect the chip and enter the burning mode
+            self.textSignal.emit("Failed to connect the chip!")
             self.pressbarSignal.emit(200)
             _port.close()
             return
-        self.textSignal.emit("连接芯片成功！")
+        self.textSignal.emit("Connect the chip successfully!")
         
 
-        if self.action == "burn": #烧录固件
+        if self.action == "burn": #Burn firmware
 
-            self.textSignal.emit("尝试提高波特率...")
+            self.textSignal.emit("Try to increase the baud rate ...")
 
             if change_baud(_port):
-                self.textSignal.emit("提高波特率成功！！！")
+                self.textSignal.emit("Success in increasing baud rate! ! !")
 
-            self.textSignal.emit("擦除固件 ... ... ")
+            self.textSignal.emit("Erase the firmware ...")
 
             if not telink_flash_erase(_port, 0x4000, 44):
-                self.textSignal.emit("擦除固件失败！！！")
+                self.textSignal.emit("Failed to erase firmware! ! !")
                 self.pressbarSignal.emit(200)
                 _port.close()
                 return
-            self.textSignal.emit("擦除固件成功！")
+            self.textSignal.emit("Successfully erased the firmware!")
 
-            self.textSignal.emit("烧录固件 :"  + self.args.file_name)
+            self.textSignal.emit("Burn firmware :"  + self.args.file_name)
 
             fo = open(self.args.file_name, "rb")
             firmware_addr = 0
             firmware_size = os.path.getsize(self.args.file_name)
             percent=0
 
-            if(firmware_size >= 192 * 1024): # 固件大于192KB，说明是合并好的固件，要跳过Boot
+            if(firmware_size >= 192 * 1024): # The firmware is greater than 192KB, indicating that it is a merged firmware, you must skip Boot
                 fo.seek(16 * 1024, 0)
                 firmware_addr = 16 * 1024
 
@@ -93,47 +93,47 @@ class TelinkThread(QThread):
                 if len(data) < 1: break
 
                 if not telink_flash_write(_port, firmware_addr, data):
-                    self.textSignal.emit("烧录固件失败！！！")
+                    self.textSignal.emit("Failed to burn firmware! ! !")
                     self.pressbarSignal.emit(200)
                     break
 
                 firmware_addr += len(data)
 
                 percent = (int)(firmware_addr *100 / firmware_size)
-                self.pressbarSignal.emit(percent)  # 跟新进度条
+                self.pressbarSignal.emit(percent)  # Follow the new progress bar
 
-            if percent == 100 : self.textSignal.emit("烧录固件完成！")
+            if percent == 100 : self.textSignal.emit("The firmware is burned!")
             fo.close()
 
-        elif self.action == "burn_triad": #烧录三元组
+        elif self.action == "burn_triad": #Burn triplet  ProductID,MAC,Secert
 
-            self.textSignal.emit("擦除三元组 ... ... ")
+            self.textSignal.emit("Erase triplet ...")
 
             if not telink_flash_erase(_port, 0x78000, 1):
-                self.textSignal.emit("擦除三元组失败！！！")
+                self.textSignal.emit("Failed to erase triplet! ! !")
                 self.pressbarSignal.emit(200)
                 _port.close()
                 return
-            self.textSignal.emit("擦除三元组成功！")
+            self.textSignal.emit("Successfully erased the triplet!")
 
-            self.textSignal.emit("烧录三元组 :" + str(self.args.triad))
+            self.textSignal.emit("Burn triplet :" + str(self.args.triad))
 
             if telink_flash_write(_port, 0x78000, self.args.triad):
-                self.textSignal.emit("烧录三元组成功！")
+                self.textSignal.emit("Successfully burned the triplet！")
                 self.pressbarSignal.emit(100)
             else:
-                self.textSignal.emit("烧录三元组失败！！！")
+                self.textSignal.emit("Failed to burn the triplet! ! !")
                 self.pressbarSignal.emit(200)
 
-        elif self.action == "erase":#擦除Flash
+        elif self.action == "erase":#Erase Flash
 
-            self.textSignal.emit("擦除Flash: 从 " + hex(self.args.addr) + " 擦除 " + str(self.args.len_t) + " 扇区... ... ")
+            self.textSignal.emit("Erase Flash: From " + hex(self.args.addr) + " Erase " + str(self.args.len_t) + " Sector ... ... ")
 
             if telink_flash_erase(_port, self.args.addr, self.args.len_t):
-                self.textSignal.emit("擦除成功！")
+                self.textSignal.emit("Successfully erased!")
                 self.pressbarSignal.emit(100)
             else:
-                self.textSignal.emit("擦除失败！！！")
+                self.textSignal.emit("Erase failed! ! !")
                 self.pressbarSignal.emit(200)
 
         _port.close()
@@ -142,7 +142,7 @@ class TB_Tools(QWidget):
     def __init__(self,parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("安信可TB模块烧录工具 " + __version__)
+        self.setWindowTitle("Anxinke TB module burning tool " + __version__)
 
         # if not os.path.exists('aithinker.png'):
         #     tmp = open('aithinker.png', 'wb+')
@@ -161,12 +161,12 @@ class TB_Tools(QWidget):
 
         self.serial_cb=QComboBox()
 
-        btn_refresh_p=QPushButton("刷新串口")
-        btn_erase_fw =QPushButton("擦除固件")
-        btn_erase_key=QPushButton("擦除Mesh Key")
-        btn_erase_all=QPushButton("整片擦除")
-        btn_rst_chip =QPushButton("复位芯片")
-        btn_clean_scn=QPushButton("清空窗口")
+        btn_refresh_p=QPushButton("Refresh the serial port")
+        btn_erase_fw =QPushButton("Erase firmware")
+        btn_erase_key=QPushButton("Erase Mesh Key")
+        btn_erase_all=QPushButton("Chip erase")
+        btn_rst_chip =QPushButton("Reset chip")
+        btn_clean_scn=QPushButton("Clear window")
 
         btn_refresh_p.clicked.connect(self.refresh_p_fn)
         btn_erase_fw.clicked.connect (lambda:self.erase_fn("fw"))
@@ -190,7 +190,7 @@ class TB_Tools(QWidget):
         
         self.tbox_file = QLineEdit()
         btn_open_file =QPushButton("···")
-        btn_burn=QPushButton("烧录固件")
+        btn_burn=QPushButton("Burn firmware")
 
         btn_open_file.clicked.connect(self.open_file_fn)
         btn_burn.clicked.connect(self.burn_fn)
@@ -208,11 +208,11 @@ class TB_Tools(QWidget):
         self.tbox_ali_Sct = QLineEdit()
 
         self.tbox_ali_pID.setPlaceholderText("Product ID")
-        self.tbox_ali_Mac.setPlaceholderText("MAC地址")
+        self.tbox_ali_Mac.setPlaceholderText("MAC address")
         self.tbox_ali_Sct.setPlaceholderText("Device Secret")
 
 
-        btn_burn_triad=QPushButton("烧录三元组")
+        btn_burn_triad=QPushButton("Burn triplet")
         btn_burn_triad.clicked.connect(self.burn_triad_fn)
 
         line_3.addWidget(self.tbox_ali_pID)
@@ -240,7 +240,7 @@ class TB_Tools(QWidget):
         self.refresh_p_fn()
 
 
-    def refresh_p_fn(self): #刷新串口号
+    def refresh_p_fn(self): #Refresh the serial number
         self.serial_cb.clear()
         plist = get_port_list()
         for i in range(0, len(plist)):
@@ -251,9 +251,9 @@ class TB_Tools(QWidget):
         self.tbox_log.clear()
         self.tbox_log.setStyleSheet("background-color:white;")
 
-    def erase_fn(self, action):#擦除Flash
+    def erase_fn(self, action):#Erase Flash
         if not len(self.serial_cb.currentText()) > 0 :
-            self.log_string("请选择串口号！！！")
+            self.log_string("Please select the serial port number!")
             return
 
         args = argparse.Namespace()
@@ -276,9 +276,9 @@ class TB_Tools(QWidget):
         self.mThread.textSignal.connect(self.log_string)
         self.mThread.start()
 
-    def rst_chip_fn(self):#复位新片
+    def rst_chip_fn(self):#Reset new movie
         if not len(self.serial_cb.currentText()) > 0 :
-            self.log_string("请选择串口号！！！")
+            self.log_string("Please select the serial port number!")
             return
 
         args = argparse.Namespace()
@@ -289,16 +289,16 @@ class TB_Tools(QWidget):
         self.mThread.textSignal.connect(self.log_string)
         self.mThread.start()
 
-    def open_file_fn(self): #选择固件
-        directory = QFileDialog.getOpenFileName(self, "选择要烧录的固件",'',"固件 (*.bin)") 
+    def open_file_fn(self): #Select firmware
+        directory = QFileDialog.getOpenFileName(self, "Choose the firmware to burn",'',"firmware (*.bin)") 
         
         if len(str(directory[0])) > 5 :
             self.tbox_file.setText(str(directory[0]))
             self.tbox_file.setStyleSheet("background-color:LightGreen;")
 
-    def burn_fn(self):#烧录固件
+    def burn_fn(self):#Burn firmware
         if not len(self.tbox_file.text()) > 5 :
-            self.log_string("请选择要烧录的固件！！！")
+            self.log_string("Please select the firmware to burn.")
             self.tbox_file.setStyleSheet("background-color:red;")
             return
 
@@ -308,7 +308,7 @@ class TB_Tools(QWidget):
             return
 
         if not len(self.serial_cb.currentText()) > 0 :
-            self.log_string("请选择串口号！！！")
+            self.log_string("Please select a serial number! ! !")
             return
 
         args = argparse.Namespace()
@@ -320,19 +320,19 @@ class TB_Tools(QWidget):
         self.mThread.textSignal.connect(self.log_string)
         self.mThread.start()
     
-    def burn_triad_fn(self):#烧录三元组
+    def burn_triad_fn(self):#Burn triplet
         try:
             data = struct.pack('<I', int(self.tbox_ali_pID.text())) + bytearray.fromhex(self.tbox_ali_Mac.text()) + bytearray.fromhex(self.tbox_ali_Sct.text())
         except Exception:
-            self.log_string("三元组格式错误！！！")
+            self.log_string("Incorrect triplet format! ! !")
             return
 
         if(len(data) != 26):
-            self.log_string("三元组长度不对！！！")
+            self.log_string("The length of the triple is wrong! ! !")
             return
 
         if not len(self.serial_cb.currentText()) > 0 :
-            self.log_string("请选择串口号！！！")
+            self.log_string("Please select a serial number! ! !")
             return
 
         args = argparse.Namespace()
@@ -344,10 +344,10 @@ class TB_Tools(QWidget):
         self.mThread.textSignal.connect(self.log_string)
         self.mThread.start()
 
-    def log_string(self, s): #Log窗口日志输出
+    def log_string(self, s): #LogWindow log output
         self.tbox_log.append(s)
 
-    def pressBar_refresh(self, a):#刷新进度条及Log串口颜色
+    def pressBar_refresh(self, a):#Refresh progress bar and Log serial port color
         if a < 101 :
             self.pbar.setValue(a)
 

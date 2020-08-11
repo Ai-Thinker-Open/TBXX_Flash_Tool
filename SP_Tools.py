@@ -31,7 +31,7 @@ class SP_Thread(QThread):
         if (self._port != None):
             self._port.write(data)
         else:
-            self.textSignal.emit("请先打开串口！")
+            self.textSignal.emit("Please open the serial port first！")
         
     def run(self):
 
@@ -39,12 +39,12 @@ class SP_Thread(QThread):
             self._port = tl_open_port(self._port_name)
             self._port.baudrate = int(self._baudRate)
         except Exception:
-            self.textSignal.emit("串口 " + self._port_name + " 打开失败，请检查串口是否被占用！！！")
+            self.textSignal.emit("Serial port " + self._port_name + "Open failed, please check whether the serial port is occupied! ! !")
             self.stateSignal.emit(1)
             return
 
         self.stateSignal.emit(0)
-        self.textSignal.emit("打开串口成功！！！")
+        self.textSignal.emit("Successfully opened the serial port! ! !")
 
         self._port.setRTS(False)
         self._port.setDTR(False)
@@ -71,11 +71,11 @@ class SP_Tools(QWidget):
 
         self.layout=QVBoxLayout()
 
-        # 最上层的文本框
+        # Top text box
 
         self.tbox_log=QTextEdit()
         self.tbox_log.setFontPointSize(10)
-        # 按钮及下拉框
+        # Buttons and drop-down boxes
         line_1=QHBoxLayout()
 
         self.serial_cb=QComboBox()
@@ -86,11 +86,11 @@ class SP_Tools(QWidget):
         self.baudRate_cb.addItem("500000")
         self.baudRate_cb.addItem("921600")
 
-        btn_refresh_p=QPushButton("刷新串口")
-        btn_recv_cnt=QPushButton("收")
-        btn_send_cnt=QPushButton("发")
-        btn_clean_scn =QPushButton("清除窗口")
-        self.btn_Open=QPushButton("打开串口")
+        btn_refresh_p=QPushButton("Refresh the serial port")
+        btn_recv_cnt=QPushButton("receive")
+        btn_send_cnt=QPushButton("send")
+        btn_clean_scn =QPushButton("clear")
+        self.btn_Open=QPushButton("Open the serial port")
 
         btn_refresh_p.clicked.connect(self.refresh_p_fn)
         btn_clean_scn.clicked.connect(self.clean_screen_fn)
@@ -107,19 +107,19 @@ class SP_Tools(QWidget):
 
         line_1.setContentsMargins(0, 0, 0, 0)
 
-        # 发送文本框及发送按钮
+        # Send text box and send button
         line_2=QHBoxLayout()
 
         self.cbox_sendData=QComboBox()
         self.cbox_sendData.setEditable(True)
 
-        self.checkBox_Hex = QCheckBox("HEX发送")
+        self.checkBox_Hex = QCheckBox("Send HEX")
         self.checkBox_Hex.setEnabled(False)
 
-        self.checkBox_CF = QCheckBox("加回车换行")
+        self.checkBox_CF = QCheckBox("Add carriage return")
         self.checkBox_CF.setChecked(True)
 
-        btn_Send=QPushButton("发送数据")
+        btn_Send=QPushButton("send data")
 
         btn_Send.clicked.connect(lambda:self.send_btn_fn())
 
@@ -133,7 +133,7 @@ class SP_Tools(QWidget):
         line_2.setStretch(2, 10)
         line_2.setStretch(3, 10)
 
-        # 预定义的AT指令按键矩阵
+        # Predefined AT command key matrix
         line_3=QGridLayout()
 
         names = ['AT', 'AT+GMR', 'AT+RST', 'AT+SLEEP','AT+RESTORE', 'AT+SCAN', 'AT+DISCONNECT',
@@ -175,12 +175,12 @@ class SP_Tools(QWidget):
 
     def set_sp_state(self, state): # 设置串口打开关闭状态
         if(state == 0): #串口已打开
-            self.btn_Open.setText("关闭串口")
+            self.btn_Open.setText("Close the serial port")
         elif(state == 1): #串口已关闭
-            self.btn_Open.setText("打开串口")
+            self.btn_Open.setText("Open the serial port")
 
     def OpenSerial(self):
-        if(self.btn_Open.text() == '打开串口'):   
+        if(self.btn_Open.text() == 'Open the serial port'):   
             self.mThread = SP_Thread(_port_name=self.serial_cb.currentText(), baudRate=self.baudRate_cb.currentText())
             self.mThread.textSignal.connect(self.log_string)
             self.mThread.stateSignal.connect(self.set_sp_state)
@@ -193,7 +193,7 @@ class SP_Tools(QWidget):
             sender = self.sender()
             self.mThread.send((sender.text() + '\r\n').encode('utf-8'))
         else:
-            self.log_string("请先打开串口！")
+            self.log_string("Please open the serial port first!")
 
 
     def send_btn_fn(self):
@@ -203,4 +203,4 @@ class SP_Tools(QWidget):
             else:
                 self.mThread.send((self.cbox_sendData.currentText()).encode('utf-8'))
         else:
-            self.log_string("请先打开串口！")
+            self.log_string("Please open the serial port first!")
