@@ -208,7 +208,7 @@ class TB_Tools(QWidget):
         self.tbox_ali_Sct = QLineEdit()
 
         self.tbox_ali_pID.setPlaceholderText("Product ID")
-        self.tbox_ali_Mac.setPlaceholderText("MAC地址")
+        self.tbox_ali_Mac.setPlaceholderText("Device Name")
         self.tbox_ali_Sct.setPlaceholderText("Device Secret")
 
 
@@ -216,15 +216,15 @@ class TB_Tools(QWidget):
         btn_burn_triad.clicked.connect(self.burn_triad_fn)
 
         line_3.addWidget(self.tbox_ali_pID)
-        line_3.addWidget(self.tbox_ali_Sct)
         line_3.addWidget(self.tbox_ali_Mac)
+        line_3.addWidget(self.tbox_ali_Sct)
         line_3.addWidget(btn_burn_triad)
 
         line_3.setContentsMargins(0, 0, 0, 0)
 
         line_3.setStretch(0, 2)
-        line_3.setStretch(1, 5)
-        line_3.setStretch(2, 2)
+        line_3.setStretch(1, 2)
+        line_3.setStretch(2, 5)
         line_3.setStretch(3, 1)
 
 
