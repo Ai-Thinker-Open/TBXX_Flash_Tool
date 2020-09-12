@@ -14,7 +14,6 @@ from contextlib import closing
 from lxml import etree
 import re
 import markdown2
-from mdx_math import MathExtension
 from PyQt5.QtWidgets import QPushButton,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QFileDialog,QLabel
 from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem,QAbstractItemView,QFrame,QHeaderView,QMessageBox
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
@@ -71,7 +70,7 @@ class FwThread(QThread):
         if self.action == "get_fw_list":#获取gitee上固件文件列表
 
             if r.status_code == 200:
-                tbodys = re.findall('<div class=\'grid list selection([\w\W]+?)<div class=\'ui tree_progress\'>',r.text)
+                tbodys = re.findall('<div class=\'grid list selection([\w\W]+?)<div class=\'ui tree_progress\'',r.text)
                 tbody = '<div class=\'grid list selection' + tbodys[0]
 
                 self.textSignal.emit(tbody)
@@ -79,7 +78,7 @@ class FwThread(QThread):
         elif self.action == "get_bin_url":#获取Bin文件的下载地址
 
             if r.status_code == 200:
-                tbodys = re.findall('<div class=\'grid list selection([\w\W]+?)<div class=\'ui tree_progress\'>',r.text)
+                tbodys = re.findall('<div class=\'grid list selection([\w\W]+?)<div class=\'ui tree_progress\'',r.text)
                 tbody = '<div class=\'grid list selection' + tbodys[0]
 
                 selector = etree.HTML(tbody)        # 转换为lxml解析的对象
@@ -191,6 +190,14 @@ class FW_Market(QWidget):
 
         rows = self.TableWidget.rowCount()
         rows_index = 0
+
+        if not messages :
+            for i in range(len(contents)):
+                messages.append("获取失败")
+
+        if not timeagos :
+            for i in range(len(contents)):
+                timeagos.append("获取失败")
 
         for content, message, timeago in zip(contents, messages, timeagos):
             content = content.strip()        # 去掉字符左右的空格

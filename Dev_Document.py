@@ -14,7 +14,6 @@ from contextlib import closing
 from lxml import etree
 import re
 import markdown2
-from mdx_math import MathExtension
 from PyQt5.QtWidgets import QPushButton,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QFileDialog,QLabel
 from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem,QAbstractItemView,QFrame,QHeaderView,QMessageBox
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
@@ -67,7 +66,7 @@ class DocThread(QThread):
                 return 
 
             if r.status_code == 200:
-                tbodys = re.findall('<div class=\'grid list selection([\w\W]+?)<div class=\'ui tree_progress\'>',r.text)
+                tbodys = re.findall('<div class=\'grid list selection([\w\W]+?)<div class=\'ui tree_progress\'',r.text)
 
                 if tbodys == None:
                     self.formSignal.emit(CMD_CLOSE_FORM) 
@@ -147,6 +146,10 @@ class Dev_Document(QWidget):
 
         rows = self.TableWidget.rowCount()
         rows_index = 0
+
+        if not messages :
+            for i in range(len(contents)):
+                messages.append("获取失败")
 
         for content, message in zip(contents, messages):
             content = content.strip()        # 去掉字符左右的空格
