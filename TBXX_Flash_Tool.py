@@ -11,12 +11,12 @@ import base64
 from PyQt5.QtWidgets import QPushButton,QApplication,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QComboBox,QFileDialog,QProgressBar
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
 from PyQt5.QtGui import QIcon
-from Telink_Tools import get_port_list,tl_open_port,connect_chip,change_baud,telink_flash_write,telink_flash_erase
+from Telink_Tools import get_port_list,tl_open_port,connect_chip,get_chip_info,change_baud,telink_flash_write,telink_flash_erase
 
 
 from aithinker_png import aithinker_png as logo
 
-__version__ = "V1.2"
+__version__ = "V2.0.0"
 
 class TelinkThread(QThread):
     pressbarSignal = pyqtSignal(int)
@@ -59,18 +59,26 @@ class TelinkThread(QThread):
             _port.close()
             return
         self.textSignal.emit("连接芯片成功！")
+
+        info = get_chip_info(_port) #获取芯片信息
+        if len(info) != 5:
+            self.textSignal.emit("获取芯片信息失败！！！")
+            self.pressbarSignal.emit(200)
+            _port.close()
+            return
+
+        jedecid = hex((info[0]<<16) | (info[1]<<8) | info[2])
+        fsize = str((1<<info[2])>>10) + " KBytes"
+        chip = hex(info[3]*256 + info[4])
+
+        self.textSignal.emit("Chip Type:" + chip + "  Flash ID:" + jedecid + "  Size:" + fsize)
         
 
         if self.action == "burn": #烧录固件
 
-            self.textSignal.emit("尝试提高波特率...")
-
-            if change_baud(_port):
-                self.textSignal.emit("提高波特率成功！！！")
-
             self.textSignal.emit("擦除固件 ... ... ")
 
-            if not telink_flash_erase(_port, 0x4000, 44):
+            if not telink_flash_erase(_port, 0, 48):
                 self.textSignal.emit("擦除固件失败！！！")
                 self.pressbarSignal.emit(200)
                 _port.close()
@@ -259,16 +267,16 @@ class TB_Tools(QWidget):
         args = argparse.Namespace()
 
         if action == "fw":
-            args.addr = 0x4000
-            args.len_t = 44
+            args.addr = 0
+            args.len_t = 48
 
         elif action == "key":
             args.addr = 0x30000
             args.len_t = 16
 
         elif action == "all":
-            args.addr = 0x4000
-            args.len_t = 124
+            args.addr = 0
+            args.len_t = 128
         
         self.mThread = TelinkThread(_port_name=self.serial_cb.currentText(), action="erase", args=args)
 

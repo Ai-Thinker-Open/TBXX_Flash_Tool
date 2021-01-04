@@ -12,6 +12,7 @@ import sys
 import time
 import zlib
 import string
+from UartBoot import uart_boot
 
 try:
     import serial
@@ -46,20 +47,20 @@ CMD_GET_VERSION = 0x00
 CMD_WRITE_FLASH = 0x01
 CMD_READ_FLASH  = 0x02
 CMD_ERASE_FLASH = 0x03
-CMD_READ_MUID   = 0x04
+CMD_CHIP_INFO   = 0x04
 CMD_CHANGE_BAUD = 0x05
 
 RES_WRITE_FLASH = 'OK_01'
 RES_READ_FLASH  = 'OK_02'
 RES_ERASE_FLASH = 'OK_03'
-RES_READ_MUID   = 'OK_04'
+RES_CHIP_INFO   = 'OK_04'
 RES_CHANGE_BAUD = 'OK_05'
 
 
 def tl_open_port(port_name):
     _port = serial.serial_for_url(port_name)
 
-    _port.baudrate = 115200
+    _port.baudrate = 500000
 
     return _port
 
@@ -98,7 +99,6 @@ def wait_result(_port, res, time_out = 200):
 
 def telink_flash_write(_port, addr, data):
     cmd_len = len(data) + 5
-    if(addr < 0x4000): addr += 0x2C000
     uart_write(_port, struct.pack('>BHIB', CMD_WRITE_FLASH, cmd_len, addr, 0) + data)
     return wait_result(_port, RES_WRITE_FLASH)
 
@@ -126,20 +126,21 @@ def telink_flash_erase(_port, addr, len_t):
 
 def connect_chip(_port):
 
-    _port.setRTS(True)
-    _port.setDTR(True)
+    if not uart_boot(_port):
+        return False
 
     time.sleep(0.1)
-
-    _port.setRTS(False)
-    time.sleep(0.15)
-    _port.setDTR(False)
-
     uart_write(_port, struct.pack('>BH', CMD_GET_VERSION, 0))
 
-    if wait_result(_port, "V"):
+    if wait_result(_port, "R"):
         return True
     return False
+
+def get_chip_info(_port):
+   
+    uart_write(_port, struct.pack('>BH', CMD_CHIP_INFO, 0))
+    time.sleep(0.05)
+    return _port.read_all()
 
 def change_baud(_port):
 
@@ -162,7 +163,7 @@ def erase_flash(_port, args):
     print("Erase Flash at " + args.addr + " " + args.len + " Sector ... ... ", end="")
     sys.stdout.flush()
 
-    if telink_flash_erase(_port,flash_addr, sector_len):
+    if telink_flash_erase(_port, flash_addr, sector_len):
         print("\033[3;32mOK!\033[0m")
     else:
         print("\033[3;31mFail!\033[0m")
@@ -194,18 +195,10 @@ def read_flash(_port, args):
 
 def burn(_port, args):
 
-    print("Try to change Baud to 921600 ... ... ", end="")
+    print("Erase Flash at 0 len 192 KB ... ... ", end="")
     sys.stdout.flush()
 
-    if change_baud(_port):
-        print("\033[3;32mOK!\033[0m")
-    else :
-        print("\033[3;33mFail!\033[0m")
-
-    print("Erase Flash at 0x4000 len 176 KB ... ... ", end="")
-    sys.stdout.flush()
-
-    if not telink_flash_erase(_port, 0x4000, 44):
+    if not telink_flash_erase(_port, 0, 48):
         print("\033[3;31mFail!\033[0m")
         return
     
@@ -215,7 +208,7 @@ def burn(_port, args):
     firmware_addr = 0
     firmware_size = os.path.getsize(args.filename)
 
-    if firmware_size > 0x2c000:
+    if firmware_size > 0x30000:
         print("\033[3;31mFirmware Too BIG!\033[0m")
         fo.close()
 
