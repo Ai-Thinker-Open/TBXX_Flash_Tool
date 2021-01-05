@@ -61,6 +61,7 @@ def tl_open_port(port_name):
     _port = serial.serial_for_url(port_name)
 
     _port.baudrate = 500000
+    _port.timeout = 0.3
 
     return _port
 
@@ -310,8 +311,7 @@ def main(custom_commandline=None):
     print("Open " + args.port + " ... ... ", end="")
     
     try:
-        _port = serial.serial_for_url(args.port)
-        _port.baudrate = 115200
+        _port = tl_open_port(args.port)
     except Exception:
         print("\033[3;31mFail!\033[0m")
         return
