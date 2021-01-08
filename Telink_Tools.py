@@ -1,3 +1,4 @@
+#coding=utf-8
 import argparse
 import base64
 import binascii
@@ -39,7 +40,7 @@ except ImportError:
           "Check the README for installation instructions." % (sys.VERSION, sys.executable))
     raise
 
-__version__ = "0.3 dev"
+__version__ = "0.5 dev"
 
 PYTHON2 = sys.version_info[0] < 3  # True if on pre-Python 3
 
@@ -100,8 +101,14 @@ def wait_result(_port, res, time_out = 200):
 
 def telink_flash_write(_port, addr, data):
     cmd_len = len(data) + 5
-    uart_write(_port, struct.pack('>BHIB', CMD_WRITE_FLASH, cmd_len, addr, 0) + data)
-    return wait_result(_port, RES_WRITE_FLASH)
+
+    error_c = 3
+    while error_c > 0:
+        uart_write(_port, struct.pack('>BHIB', CMD_WRITE_FLASH, cmd_len, addr, 0) + data)
+        if wait_result(_port, RES_WRITE_FLASH): return True
+        time.sleep(0.5)
+        error_c-=1
+    return False
 
 def telink_flash_read(_port, addr, len_b):
     uart_write(_port, struct.pack('>BHIB', CMD_READ_FLASH, 5, addr,len_b))
@@ -122,7 +129,20 @@ def telink_flash_erase(_port, addr, len_t):
     if (addr + (len_t * 0x1000) ) > 0x80000: return False
 
     uart_write(_port, struct.pack('>BHIB', CMD_ERASE_FLASH, 5, addr, len_t))
-    time.sleep(len_t * 0.03) #wait erase complect
+
+    sys.stdout.write('\033[?25l-')
+    sys.stdout.flush()
+    for i in range((int)(len_t/3)):
+        time.sleep(0.1) #wait erase complect
+        m = i%4
+        if m == 1: sys.stdout.write("\b\\")
+        elif m == 2: sys.stdout.write("\b|")
+        elif m == 3: sys.stdout.write("\b/")
+        elif m == 0: sys.stdout.write("\b-")
+        sys.stdout.flush()
+
+    sys.stdout.write("\b \b\033[?25h");sys.stdout.flush()
+
     return wait_result(_port, RES_ERASE_FLASH)
 
 def connect_chip(_port):
@@ -143,25 +163,12 @@ def get_chip_info(_port):
     time.sleep(0.05)
     return _port.read_all()
 
-def change_baud(_port):
-
-    uart_write(_port, struct.pack('>BH', CMD_CHANGE_BAUD, 0))
-
-    _port.baudrate = 921600
-    time.sleep(0.01)
-    if wait_result(_port, RES_CHANGE_BAUD, 50):
-        return True
-    else:
-        _port.baudrate = 115200
-        connect_chip(_port)
-        return False
-
 def erase_flash(_port, args):
 
     flash_addr = int(args.addr, 0)
     sector_len = int(args.len,  0)
 
-    print("Erase Flash at " + args.addr + " " + args.len + " Sector ... ... ", end="")
+    sys.stdout.write("Erase Flash at " + args.addr + " " + args.len + " Sector ... ... ")
     sys.stdout.flush()
 
     if telink_flash_erase(_port, flash_addr, sector_len):
@@ -177,7 +184,7 @@ def read_flash(_port, args):
         print("\033[3;31mThe MAX read len is 255 bytes!\033[0m")
         return
 
-    print("Read Flash from " + args.addr + " " + args.len + " Bytes ... ... ", end="")
+    sys.stdout.write("Read Flash from " + args.addr + " " + args.len + " Bytes ... ... ")
     sys.stdout.flush()
 
     data_c = 0
@@ -189,14 +196,14 @@ def read_flash(_port, args):
             if data_c == 16: 
                 print("%02x " %b)
                 data_c = 0
-            else :print("%02x " %b, end='')
+            else :sys.stdout.write("%02x " %b);sys.stdout.flush()
         print('')
     else:
         print("\033[3;31mFail!\033[0m")
 
 def burn(_port, args):
 
-    print("Erase Flash at 0 len 192 KB ... ... ", end="")
+    sys.stdout.write("Start erase Flash at 0 len 192 KB ... ")
     sys.stdout.flush()
 
     if not telink_flash_erase(_port, 0, 48):
@@ -226,7 +233,7 @@ def burn(_port, args):
         firmware_addr += len(data)
 
         percent = (int)(firmware_addr *100 / firmware_size)
-        sys.stdout.write("\r" + str(percent) + "% [\033[3;32m{0}\033[0m{1}]".format(">"*(int)((percent/100)*bar_len),"="*(bar_len-(int)((percent/100)*bar_len))))
+        sys.stdout.write("\r" + str(percent) + "% [\033[3;32m{0}\033[0m{1}]".format(">"*(int)(percent*bar_len/100),"="*(bar_len-(int)(percent*bar_len/100))))
         sys.stdout.flush()
 
     print("")
@@ -240,7 +247,11 @@ def burn_triad(_port, args):
         print("\033[3;31mTriad Error!\033[0m")
         return
 
-    print("Erase Flash at 0x78000 len 4 KB ... ... ",end="")
+    print("Your productID =  " + args.productID )
+    print("Your MAC =   " + args.MAC )
+    print("Your Secret =   " + args.Secret )
+
+    sys.stdout.write("Erase Flash at 0x78000 len 4 KB ... ... ")
     sys.stdout.flush()
 
     if not telink_flash_erase(_port, 0x78000, 1):
@@ -248,13 +259,25 @@ def burn_triad(_port, args):
         return
     print("\033[3;32mOK!\033[0m")
 
-    print("Burn Triad to 0x78000 ... ... ",end="")
+    sys.stdout.write("Burn Triad to 0x78000 ... ... ")
     sys.stdout.flush()
 
     if not telink_flash_write(_port, 0x78000, data):
         print("\033[3;31mFail!\033[0m")
         return
     print("\033[3;32mOK!\033[0m")
+
+def dump_chip_info(_port):
+    info = get_chip_info(_port) #获取芯片信息
+    if len(info) != 5:
+        print("Get Chip Info Fail!!!")
+        return
+
+    jedecid = hex((info[0]<<16) | (info[1]<<8) | info[2])
+    fsize = str((1<<info[2])>>10) + " KBytes"
+    chip = hex(info[3]*256 + info[4])
+
+    print("Chip Type: " + chip + "   Flash ID: " + jedecid + "   Size: " + fsize)
 
 def test(_port, args):
     while True:
@@ -308,7 +331,8 @@ def main(custom_commandline=None):
     # else:
     #     operation_args = inspect.getfullargspec(operation_func).args
 
-    print("Open " + args.port + " ... ... ", end="")
+    sys.stdout.write("Open " + args.port + " ... ... ")
+    sys.stdout.flush()
     
     try:
         _port = tl_open_port(args.port)
@@ -316,20 +340,35 @@ def main(custom_commandline=None):
         print("\033[3;31mFail!\033[0m")
         return
 
-    print('\033[3;32mSuccess!\033[0m\r\nConnect Board ... ... ', end="")
+    sys.stdout.write('\033[3;32mSuccess!\033[0m\r\nConnect Board ... ...')
+    sys.stdout.flush()
 
     if connect_chip(_port):
         print("\033[3;32mSuccess!\033[0m")
+        dump_chip_info(_port)
         operation_func(_port,args)
     else:
         print("\033[3;31mFail!\033[0m")
 
+        print("\r\n**********************************")
+        print("\033[3;31m***\033[3;32mPlease check the connection!\033[3;31m***\033[0m\r\n")
+        
+        print("USB-TTL   <-------->     TB Moudle")
+        print("                                  ")
+        print("              / ------470------SWS")
+        print("Tx ----------+                     ")
+        print("              \ ------470------Rx ")
+        print("Rx ----------------------------Tx ")
+        print("RTS----------------------------RST")
+
+
     _port.close()
 
 def _main():
-    #try:
+
+    # try:
     main()
-    # except FatalError as e:
+    # except Exception as e:
     #     print('\nA fatal error occurred: %s' % e)
     #     sys.exit(2)
 
