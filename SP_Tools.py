@@ -11,7 +11,7 @@ import base64
 from PyQt5.QtWidgets import QPushButton,QApplication,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QComboBox,QFileDialog,QProgressBar,QGridLayout,QCheckBox
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
 from PyQt5.QtGui import QIcon,QFont,QTextCursor
-from Telink_Tools import get_port_list,tl_open_port,connect_chip,change_baud,telink_flash_write,uart_read
+from Telink_Tools import get_port_list,tl_open_port,connect_chip,telink_flash_write,uart_read
 
 
 class SP_Thread(QThread):

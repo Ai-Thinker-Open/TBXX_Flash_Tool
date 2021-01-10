@@ -11,7 +11,7 @@ import base64
 from PyQt5.QtWidgets import QPushButton,QApplication,QLineEdit,QWidget,QTextEdit,QVBoxLayout,QHBoxLayout,QComboBox,QFileDialog,QProgressBar
 from PyQt5.QtCore import Qt,QThread,pyqtSignal
 from PyQt5.QtGui import QIcon
-from Telink_Tools import get_port_list,tl_open_port,connect_chip,get_chip_info,change_baud,telink_flash_write,telink_flash_erase
+from Telink_Tools import get_port_list,tl_open_port,connect_chip,get_chip_info,telink_flash_write,telink_flash_erase
 
 
 from aithinker_png import aithinker_png as logo

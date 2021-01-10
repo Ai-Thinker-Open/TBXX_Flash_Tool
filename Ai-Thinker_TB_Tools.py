@@ -64,5 +64,5 @@ if __name__=="__main__":
     win.show()
 
     su = SimpleUpdata()
-    su.check_updata('https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/updata.json')
+    # su.check_updata('https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/updata.json')
     sys.exit(app.exec_())
