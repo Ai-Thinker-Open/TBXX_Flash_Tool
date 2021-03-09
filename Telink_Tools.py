@@ -149,6 +149,11 @@ def connect_chip(_port):
         return False
 
     time.sleep(0.1)
+
+    _port.baudrate = 921600
+
+    time.sleep(0.1)
+
     uart_write(_port, struct.pack('>BH', CMD_GET_VERSION, 0))
 
     if wait_result(_port, "R"):
@@ -354,7 +359,7 @@ def main(custom_commandline=None):
         print("USB-TTL   <-------->     TB Moudle")
         print("                                  ")
         print("              / ------470------SWS")
-        print("Tx ----------+                     ")
+        print("Tx ----------+                    ")
         print("              \ ------470------Rx ")
         print("Rx ----------------------------Tx ")
         print("RTS----------------------------RST")

@@ -20,7 +20,7 @@ from FW_Market import FW_Market
 from SP_Tools import SP_Tools
 from Dev_Document import Dev_Document
 
-__version__ = "V2.0.0"
+__version__ = "V2.1.0"
 
 class MainForm(QTabWidget):
     def __init__(self,parent=None):

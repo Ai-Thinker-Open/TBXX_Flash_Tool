@@ -16,7 +16,7 @@ from Telink_Tools import get_port_list,tl_open_port,connect_chip,get_chip_info,t
 
 from aithinker_png import aithinker_png as logo
 
-__version__ = "V2.0.0"
+__version__ = "V2.1.0"
 
 class TelinkThread(QThread):
     pressbarSignal = pyqtSignal(int)
