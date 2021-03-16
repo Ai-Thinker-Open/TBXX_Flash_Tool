@@ -16,7 +16,7 @@ from Telink_Tools import get_port_list,tl_open_port,connect_chip,get_chip_info,t
 
 from aithinker_png import aithinker_png as logo
 
-__version__ = "V2.1.0"
+__version__ = "V2.1.1"
 
 class TelinkThread(QThread):
     pressbarSignal = pyqtSignal(int)
@@ -54,7 +54,15 @@ class TelinkThread(QThread):
             return
 
         if not connect_chip(_port): #连接芯片，进入烧录模式
-            self.textSignal.emit("连接芯片失败！！！")
+            self.textSignal.emit('''连接芯片失败！！！  请检查接线：
+USB-TTL   <-------->     TB Moudle
+  
+              / ---------------SWS
+Tx ----------+  
+              \\----------------Rx
+Rx ----------------------------Tx
+RTS(或DTR)---------------RST(或VCC)
+''')
             self.pressbarSignal.emit(200)
             _port.close()
             return
