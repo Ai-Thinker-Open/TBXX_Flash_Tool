@@ -2,6 +2,7 @@
 
 V2.x.x版本的烧录工具不再使用bootloader，如果您需要使用V 1.5.x 版本的工具，请转到[https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x)
 
+最新正式版下载：[链接](https://oapi.dingtalk.com/robot/send?access_token=808f68703b923031f65966529630bee74086e12f739ca0c88ff28c19b1fb81ad)
 
 ## 工具原理介绍
 此工具使用python语言编写，有命令行和图形界面连个版本。命令行版本效率高，方便集成; 图形界面版本操作简单直观，易于上手。
